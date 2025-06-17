@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vulnerability Report Generator</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+            text-align: center; 
+            max-width: 600px; 
+            width: 100%; 
+            position: relative;
+        }
+        h1 { 
+            color: #1c1e21; 
+            font-size: 28px; 
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .subtitle { 
+            color: #606770; 
+            font-size: 16px; 
+            margin-bottom: 30px;
+        }
+        
+        /* GitHub链接样式 */
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            background: #24292e;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 4px 12px rgba(36, 41, 46, 0.15);
+        }
+        .github-link:hover {
+            background: #0366d6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(3, 102, 214, 0.25);
+            border-color: #0366d6;
+        }
+        .github-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            fill: currentColor;
+        }
+        .star-icon {
+            width: 14px;
+            height: 14px;
+            margin-left: 8px;
+            fill: currentColor;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 命令说明区域 */
+        .commands-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .commands-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1c1e21;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .command-group {
+            margin-bottom: 20px;
+        }
+        .command-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .command-code {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            word-break: break-all;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .command-code:hover {
+            background: #374151;
+        }
+        .copy-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* 上传区域 */
+        form { margin-top: 20px; }
+        #drop-zone { 
+            border: 2px dashed #dce1e6; 
+            padding: 40px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+        }
+        #drop-zone.dragover { 
+            border-color: #007bff; 
+            background: linear-gradient(145deg, #f0f8ff, #e6f3ff);
+            transform: scale(1.02);
+        }
+        #file-input { display: none; }
+        #file-name { 
+            margin-top: 15px; 
+            color: #28a745; 
+            font-weight: 600;
+            font-size: 14px;
+        }
+        #submit-btn { 
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white; 
+            border: none; 
+            padding: 14px 30px; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            margin-top: 25px; 
+            width: 100%; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        #submit-btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+        #submit-btn:disabled { 
+            background: linear-gradient(45deg, #a0c8f0, #87ceeb);
+            cursor: not-allowed; 
+            transform: none;
+            box-shadow: none;
+        }
+        .loader { 
+            display: none; 
+            margin-top: 20px; 
+            border: 4px solid #f3f3f3; 
+            border-radius: 50%; 
+            border-top: 4px solid #007bff; 
+            width: 40px; 
+            height: 40px; 
+            animation: spin 1s linear infinite; 
+            margin-left: auto; 
+            margin-right: auto; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+
+        /* Slogan样式 */
+        .slogan {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            font-style: italic;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            animation: fadeInSlogan 2s ease-in-out;
+        }
+        @keyframes fadeInSlogan {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .command-code {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Vulnerability Report Generator</h1>
+        <p class="subtitle">Upload a Grype or Trivy JSON file to generate an interactive HTML report.</p>
+        
+        <!-- GitHub链接 -->
+        <a href="https://github.com/wenyurush/trivy-grype_report" target="_blank" class="github-link">
+            <svg class="github-icon" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+            </svg>
+            View on GitHub
+            <svg class="star-icon" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+                <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"></path>
+            </svg>
+        </a>
+
+        <!-- 扫描命令说明 -->
+        <div class="commands-section">
+            <div class="commands-title">📋 How to Generate Scan Reports</div>
+            
+            <div class="command-group">
+                <span class="command-label">🔍 Grype Scan Command:</span>
+                <div class="command-code" onclick="copyToClipboard(this)">grype image:tag --scope all-layers -o json > image_tag.grype.json</div>
+                <div class="copy-hint">Click to copy command</div>
+            </div>
+
+            <div class="command-group">
+                <span class="command-label">🔍 Trivy Scan Command:</span>
+                <div class="command-code" onclick="copyToClipboard(this)">trivy image image:tag --format json -o image_tag.trivy.json</div>
+                <div class="copy-hint">Click to copy command</div>
+            </div>
+
+            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 14px; color: #1565c0;">
+                💡 <strong>Tip:</strong> Replace <code>image:tag</code> with your actual container image name and tag
+            </div>
+        </div>
+
+        <!-- 文件上传区域 -->
+        <form id="upload-form" action="https://api-report.xecho.org/upload" method="post" enctype="multipart/form-data" target="_blank">
+            <div id="drop-zone">
+                <div style="font-size: 48px; margin-bottom: 15px;">📤</div>
+                <p style="margin: 0; font-size: 16px; font-weight: 500;">Drag & Drop your JSON file here</p>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #6c757d;">or click to select</p>
+                <input type="file" name="report_file" id="file-input" accept=".json" required>
+                <p id="file-name"></p>
+            </div>
+            <button type="submit" id="submit-btn" disabled>🚀 Generate Report</button>
+        </form>
+
+        <div class="loader" id="loader"></div>
+        
+        <!-- Slogan -->
+        <div class="slogan">Forged in human-AI light.</div>
+    </div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileNameDisplay = document.getElementById('file-name');
+    const submitBtn = document.getElementById('submit-btn');
+    const uploadForm = document.getElementById('upload-form');
+    const loader = document.getElementById('loader');
+
+    // 复制命令到剪贴板
+    function copyToClipboard(element) {
+        const text = element.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalBg = element.style.backgroundColor;
+            element.style.backgroundColor = '#10b981';
+            element.style.color = 'white';
+            
+            setTimeout(() => {
+                element.style.backgroundColor = originalBg;
+                element.style.color = '#e2e8f0';
+            }, 1000);
+        }).catch(err => {
+            console.log('Copy failed: ', err);
+        });
+    }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo();
+        }
+    });
+    fileInput.addEventListener('change', updateFileInfo);
+
+    function updateFileInfo() {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            fileNameDisplay.innerHTML = `✅ Selected: <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
+            submitBtn.disabled = false;
+        } else {
+            fileNameDisplay.textContent = '';
+            submitBtn.disabled = true;
+        }
+    }
+
+    uploadForm.addEventListener('submit', () => {
+        submitBtn.style.display = 'none';
+        loader.style.display = 'block';
+
+        // 3秒后恢复按钮状态
+        setTimeout(() => {
+            submitBtn.style.display = 'block';
+            loader.style.display = 'none';
+        }, 3000);
+    });
+
+    // 页面加载完成后的小动画
+    window.addEventListener('load', () => {
+        document.querySelector('.container').style.transform = 'scale(0.95)';
+        document.querySelector('.container').style.opacity = '0';
+        setTimeout(() => {
+            document.querySelector('.container').style.transition = 'all 0.5s ease';
+            document.querySelector('.container').style.transform = 'scale(1)';
+            document.querySelector('.container').style.opacity = '1';
+        }, 100);
+    });
+</script>
+</body>
+</html>
