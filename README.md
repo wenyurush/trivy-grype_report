@@ -1,69 +1,145 @@
-Interactive Vulnerability Report Generator
+# 🛡️ Vulnerability Report Generator for Trivy & Grype
 
 ![alt text](https://img.shields.io/badge/Powered%20by-Cloudflare-F38020?logo=cloudflare)
 
-一个简单而强大的 Web 工具，可将 Grype 和 Trivy 生成的 JSON 扫描报告，转换成美观、可交互的独立 HTML 报告。
+This project provides a simple yet powerful web application to convert security scan reports from **Trivy** and **Grype** into beautiful, interactive, and self-contained HTML reports.
 
-✨ 在线体验 »
-效果预览
+It consists of two main parts:
+1.  **A static frontend (`index.html`)** for uploading JSON report files.
+2.  **A serverless backend (`index.ts`)** built with Hono for Cloudflare Workers that processes the JSON and generates the final HTML report.
 
-https://report.xecho.org/
+[**➡️ Online Demo**](https://report.xecho.org)
 
-核心特性
+[](https://report.xecho.org)
+*The user-friendly upload interface.*
 
-支持多种工具: 自动检测并解析 Grype 和 Trivy 的 JSON 输出格式。
+[](https://report.xecho.org)
+*An example of the interactive HTML report.*
 
-丰富的数据看板: 以卡片和图表形式直观展示漏洞统计，包括按严重性、软件包、路径和类型分类。
+## ✨ Key Features
 
-深度交互体验:
+-   **Dual Scanner Support**: Natively parses JSON output from both [Trivy](https://github.com/aquasecurity/trivy) and [Grype](https://github.com/anchore/grype).
+-   **Interactive Dashboard**: The generated report includes an interactive dashboard with summary cards and detailed statistics.
+-   **Dynamic Filtering and Searching**: Easily filter vulnerabilities by severity, package name, location, or type. A live search bar helps you find specific CVEs or packages instantly.
+-   **Clickable Statistics**: Drill down into the data by clicking on stats tables to automatically apply filters to the main vulnerability list.
+-   **Single-File & Portable**: The generated report is a single, self-contained HTML file with no external dependencies, making it easy to share and archive.
+-   **Modern UI**: Clean, responsive, and user-friendly interface for both the uploader and the report.
+-   **Serverless & Scalable**: Built on Cloudflare Workers, the backend is fast, scalable, and cost-effective.
 
-点击统计图表，可快速筛选主列表中的漏洞。
+## 🚀 How to Use
 
-内置全文搜索，可快速查找 CVE、软件包、路径等信息。
+### 1. Generate a Scan Report
 
-支持按漏洞等级进行筛选。
+First, scan your container image or filesystem using either Trivy or Grype and ensure the output is in JSON format.
 
-单一文件报告: 生成的报告是一个独立的 HTML 文件，包含了所有数据、样式和脚本，易于分享和归档。
+**For Grype:**
+```bash
+# Replace 'image:tag' with your target image
+grype image:tag --scope all-layers -o json > image_tag.grype.json
+```
 
-纯 Serverless 架构: 前端部署于 Cloudflare Pages，后端逻辑由 Cloudflare Workers 处理，无需管理服务器。
+**For Trivy:**
+```bash
+# Replace 'image:tag' with your target image
+trivy image image:tag --format json -o image_tag.trivy.json
+```
 
-响应式设计: 在桌面和移动设备上均有良好的浏览体验。
+### 2. Upload and Generate
 
-技术栈
+1.  Navigate to the [**Vulnerability Report Generator**](https://report.xecho.org).
+2.  Drag and drop your `grype.json` or `trivy.json` file onto the upload area, or click to select the file.
+3.  Click the "🚀 Generate Report" button.
+4.  A new browser tab will open with your interactive HTML report.
 
-后端:
+## 🛠️ How It Works
 
-Cloudflare Workers: 运行后端逻辑的 Serverless 平台。
+The architecture is simple and decoupled:
 
-Hono: 轻量、快速的 Web 框架，专为边缘计算设计。
+1.  **Frontend (`index.html`)**: A static web page that provides the UI for file uploads. It sends the selected JSON file to the backend API.
+2.  **Backend (`index.ts` on Cloudflare Workers)**:
+    -   Receives the file via a `POST` request to the `/upload` endpoint.
+    -   Detects whether the file is a Trivy or Grype report.
+    -   Parses the JSON into a standardized `Vulnerability` data structure.
+    -   Calculates detailed statistics (e.g., counts by severity, package, location).
+    -   Injects the data and statistics into a templated HTML string.
+    -   The template includes JavaScript for all the interactive filtering, sorting, and UI logic.
+    -   Returns the complete, self-contained HTML report as the response.
 
-TypeScript: 保证代码的类型安全和可维护性。
+## 🔧 Deployment (Self-Hosting)
 
-前端:
+You can easily deploy your own instance of this tool.
 
-Cloudflare Pages: 托管静态前端文件。
+### Prerequisites
 
-原生 HTML, CSS, 和 JavaScript: 无前端框架，极致轻量，加载迅速。
+-   [Node.js](https://nodejs.org/) and npm.
+-   A [Cloudflare account](https://dash.cloudflare.com/sign-up).
+-   [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed globally: `npm install -g wrangler`.
 
-部署:
+### Backend (Cloudflare Worker)
 
-Wrangler CLI: Cloudflare 官方命令行工具，用于开发和部署。
+1.  Clone this repository.
+2.  Navigate to the backend directory:
+    ```bash
+    cd api/
+    ```
+3.  Install dependencies:
+    ```bash
+    npm install
+    ```
+4.  Log in to your Cloudflare account:
+    ```bash
+    npx wrangler login
+    ```
+5.  **Crucially**, you need to update the CORS policy in `src/index.ts` to allow requests from the domain where you will host your frontend. Change `https://report.xecho.org` to your frontend's URL (or `*` for local testing, though not recommended for production).
+    ```typescript
+    // in api/src/index.ts
+    app.use('/upload', cors({
+      origin: 'https://your-frontend-domain.com', // <-- CHANGE THIS
+      allowMethods: ['POST', 'OPTIONS'],
+    }));
+    ```
+6.  Deploy the worker:
+    ```bash
+    npx wrangler deploy
+    ```
+    Wrangler will output the URL of your deployed worker (e.g., `https://api-report.<your-account>.workers.dev`). **Copy this URL.**
 
-工作原理
+### Frontend (Static Site)
 
-整个流程非常简单直接：
+The frontend is a single `index.html` file. You can host it on any static hosting provider like GitHub Pages, Vercel, or Cloudflare Pages.
 
-上传: 用户通过 https://report.xecho.org 上的表单上传一个 .json 文件。
+1.  Open the `index.html` file.
+2.  Find the `<form>` tag and update the `action` attribute to point to your newly deployed Cloudflare Worker URL.
 
-处理: 表单将文件 POST 到后端的 Cloudflare Worker (https://api-report.xecho.org/upload)。
+    ```html
+    <!-- in index.html -->
+    <form id="upload-form" action="https://your-worker-url/upload" method="post" enctype="multipart/form-data" target="_blank">
+      <!-- ... -->
+    </form>
+    ```
+3.  Deploy the modified `index.html` file to your static hosting provider.
 
-解析: Worker 接收到文件后：
-a. 检测文件是 Grype 还是 Trivy 格式。
-b. 根据对应的格式解析文件，将漏洞信息标准化为统一的数据结构。
-c. 计算各种维度的统计数据。
+Now you have a fully working, self-hosted version of the report generator!
 
-生成: Worker 将解析后的数据和统计信息动态地注入到一个 HTML 模板中，生成一个包含所有内容（数据、CSS、交互式 JS）的完整 HTML 字符串。
+## 📂 Project Structure
 
-响应: Worker 将生成的 HTML 作为响应返回给浏览器。
+```
+.
+├── index.html         # The static frontend uploader page.
+├── index.ts           # The Cloudflare Worker backend (Hono app).
+└── README.md          # This file.
+```
 
-展示: 浏览器在新标签页中渲染这个 HTML，用户得到一份功能完整的交互式报告。
+(Note: For a production setup, the `index.ts` file would typically reside in a directory structure like `api/src/index.ts` with a corresponding `package.json` and `wrangler.toml`.)
+
+## 🤝 Contributing
+
+Contributions are welcome! If you have ideas for improvements, new features, or find a bug, please feel free to open an issue or submit a pull request.
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
+
+---
+
+> Forged in human-AI light.
