@@ -13,8 +13,12 @@ It consists of two main parts:
 [](https://report.xecho.org)
 *The user-friendly upload interface.*
 
+![upload page](./image/upload.jpg "upload page")
+
 [](https://report.xecho.org)
 *An example of the interactive HTML report.*
+
+![report page](./image/report.jpg "report page")
 
 ## ✨ Key Features
 
